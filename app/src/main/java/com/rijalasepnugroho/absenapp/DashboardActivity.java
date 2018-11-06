@@ -7,6 +7,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.rijalasepnugroho.absenapp.helper.Constant;
+import com.rijalasepnugroho.absenapp.helper.SessionManager;
+
 public class DashboardActivity extends AppCompatActivity {
 
     public static boolean hasLogin = false;
@@ -17,12 +20,7 @@ public class DashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
-        sessionManager = new SessionManager(this);
-
-        //if(!sessionManager.getHasLogin()){
-            startActivity(new Intent(DashboardActivity.this, LoginActivity.class));
-            finish();
-        //}
+//        sessionManager = new SessionManagerager(this);
 
         btnAbsen = findViewById(R.id.btnAbsen);
         btnAbsen.setOnClickListener(new View.OnClickListener() {
@@ -31,11 +29,16 @@ public class DashboardActivity extends AppCompatActivity {
                 absenProses();
             }
         });
-
-
     }
 
     private void absenProses(){
-        Toast.makeText(this, "@string/message_proses_absen", Toast.LENGTH_LONG).show();
+        if(SessionManager.getString(this, Constant.TOKEN) == null){
+            startActivity(new Intent(DashboardActivity.this, LoginActivity.class));
+            finish();
+        }else {
+            // tetap di dashboard
+            Toast.makeText(this, "Anda sudah login", Toast.LENGTH_LONG).show();
+        }
+
     }
 }
