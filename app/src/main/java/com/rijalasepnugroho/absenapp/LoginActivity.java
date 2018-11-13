@@ -1,7 +1,11 @@
 package com.rijalasepnugroho.absenapp;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.os.Build;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -128,5 +132,7 @@ public class LoginActivity extends AppCompatActivity {
         };
         queue.add(sr);
     }
+
+
 
 }
