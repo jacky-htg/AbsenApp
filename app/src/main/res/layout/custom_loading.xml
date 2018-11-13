@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="35dp"
+        android:background="#f2f2f2"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true">
+
+        <com.wang.avi.AVLoadingIndicatorView
+            android:id="@+id/avi"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:visibility="visible"
+            app:indicatorName="BallSpinFadeLoaderIndicator"
+            app:indicatorColor="@color/colorPrimary"
+            android:layout_centerHorizontal="true"/>
+
+        <TextView
+            android:id="@+id/txtLoading"
+            android:layout_below="@+id/avi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Please wait"
+            android:textSize="15sp"
+            android:textColor="@color/colorPrimary"
+            android:layout_marginTop="13dp"/>
+
+    </RelativeLayout>
+
+</LinearLayout>
