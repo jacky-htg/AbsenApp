@@ -94,7 +94,6 @@ public class LoginActivity extends AppCompatActivity {
                     if (message.matches("Login Success!")) {
                         String token = jobj.getString("Token");
                         SessionManager.putString(LoginActivity.this, Constant.TOKEN, token);
-                        dlg.showDialogString(LoginActivity.this, message);
                         startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
                     } else {
                         dlg.showDialogString(LoginActivity.this, message);
