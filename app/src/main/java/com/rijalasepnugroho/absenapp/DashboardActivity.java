@@ -2,6 +2,7 @@ package com.rijalasepnugroho.absenapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -24,12 +25,26 @@ import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.rijalasepnugroho.absenapp.helper.Constant;
+import com.rijalasepnugroho.absenapp.helper.MyDialog;
+import com.rijalasepnugroho.absenapp.helper.Server;
 import com.rijalasepnugroho.absenapp.helper.SessionManager;
+import com.rijalasepnugroho.absenapp.helper.URL;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DashboardActivity extends AppCompatActivity {
 
@@ -37,7 +52,10 @@ public class DashboardActivity extends AppCompatActivity {
     Button btnAbsen;
     SessionManager sessionManager;
     private Toolbar toolbar;
+    private MyDialog dlg = new MyDialog();
     private EditText editLocation;
+    private String lat, lng;
+    private Dialog dialogLoading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,11 +102,67 @@ public class DashboardActivity extends AppCompatActivity {
         double latitude = loc.getLatitude();
         double longitude = loc.getLongitude();
         editLocation.setText(""+latitude+ " , " +longitude);
+        lat = latitude +"";
+        lng = longitude + "";
         sendGPS();
     }
 
     private void sendGPS() {
         // method to upload gps here
+        dialogLoading = MyDialog.showDialog(this);
+        final JSONObject job = new JSONObject();
+        try {
+            job.put("jwt", SessionManager.getString(this, Constant.TOKEN));
+            job.put("lat", lat);
+            job.put("long", lng);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        RequestQueue queue = Server.getInstance(this).getRequestQueue();
+        StringRequest sr = new StringRequest(Request.Method.POST, URL.GET_TOKEN, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    Log.e("LOGIN", response.toString());
+                    dialogLoading.dismiss();
+                    JSONObject jobj = new JSONObject(response);
+                    String stat = jobj.getString("status");
+                    String message = jobj.getString("message");
+                    if (stat.matches("Success")) {
+                        dlg.showDialogString(DashboardActivity.this, message);
+                    } else {
+                        dlg.showDialogString(DashboardActivity.this, message);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    dialogLoading.dismiss();
+                    Toast.makeText(DashboardActivity.this, "Login gagal", Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                String body;
+                Log.e("absen", error.networkResponse.data.toString());
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> params = new HashMap<>();
+                params.put("Content-Type", "application/json");
+                params.put("Accept", "application/json");
+                params.put("Authorization", Constant.BEARER + " 65B6778032156");
+                return params;
+            }
+
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return job.toString().getBytes();
+            }
+        };
+        queue.add(sr);
     }
 
     @Override
