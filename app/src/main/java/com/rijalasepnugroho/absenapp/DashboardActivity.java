@@ -1,10 +1,19 @@
 package com.rijalasepnugroho.absenapp;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,12 +25,26 @@ import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.rijalasepnugroho.absenapp.helper.Constant;
+import com.rijalasepnugroho.absenapp.helper.MyDialog;
+import com.rijalasepnugroho.absenapp.helper.Server;
 import com.rijalasepnugroho.absenapp.helper.SessionManager;
+import com.rijalasepnugroho.absenapp.helper.URL;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DashboardActivity extends AppCompatActivity {
 
@@ -29,7 +52,10 @@ public class DashboardActivity extends AppCompatActivity {
     Button btnAbsen;
     SessionManager sessionManager;
     private Toolbar toolbar;
+    private MyDialog dlg = new MyDialog();
     private EditText editLocation;
+    private String lat, lng;
+    private Dialog dialogLoading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +78,91 @@ public class DashboardActivity extends AppCompatActivity {
             finish();
         }else {
             // tetap di dashboard
-            Toast.makeText(this, "Anda sudah login", Toast.LENGTH_LONG).show();
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                LocationListener locationListener = new MyLocationListener();
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 10, locationListener);
+                Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                if(loc != null){
+                    if (isMockLocationOn(loc, DashboardActivity.this)){
+                        Toast.makeText(DashboardActivity.this, "You use Fake GPS", Toast.LENGTH_LONG).show();
+                        finish();
+                    }else{
+                        showAddress(loc);
+                    }
+                }
+            }else {
+                Toast.makeText(this, "Please check permission", Toast.LENGTH_LONG).show();
+            }
+
         }
+    }
+
+    private void showAddress(Location loc) {
+        double latitude = loc.getLatitude();
+        double longitude = loc.getLongitude();
+        editLocation.setText(""+latitude+ " , " +longitude);
+        lat = latitude +"";
+        lng = longitude + "";
+        sendGPS();
+    }
+
+    private void sendGPS() {
+        // method to upload gps here
+        dialogLoading = MyDialog.showDialog(this);
+        final JSONObject job = new JSONObject();
+        try {
+            job.put("jwt", SessionManager.getString(this, Constant.TOKEN));
+            job.put("lat", lat);
+            job.put("long", lng);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        RequestQueue queue = Server.getInstance(this).getRequestQueue();
+        StringRequest sr = new StringRequest(Request.Method.POST, URL.GET_TOKEN, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    Log.e("LOGIN", response.toString());
+                    dialogLoading.dismiss();
+                    JSONObject jobj = new JSONObject(response);
+                    String stat = jobj.getString("status");
+                    String message = jobj.getString("message");
+                    if (stat.matches("Success")) {
+                        dlg.showDialogString(DashboardActivity.this, message);
+                    } else {
+                        dlg.showDialogString(DashboardActivity.this, message);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    dialogLoading.dismiss();
+                    Toast.makeText(DashboardActivity.this, "Login gagal", Toast.LENGTH_LONG).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                String body;
+                Log.e("absen", error.networkResponse.data.toString());
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> params = new HashMap<>();
+                params.put("Content-Type", "application/json");
+                params.put("Accept", "application/json");
+                params.put("Authorization", Constant.BEARER + " 65B6778032156");
+                return params;
+            }
+
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return job.toString().getBytes();
+            }
+        };
+        queue.add(sr);
     }
 
     @Override
@@ -81,11 +190,15 @@ public class DashboardActivity extends AppCompatActivity {
 
         @Override
         public void onLocationChanged(Location loc) {
-            editLocation.setText("");
-            Toast.makeText(
-                    getBaseContext(),
-                    "Location changed: Lat: " + loc.getLatitude() + " Lng: "
-                            + loc.getLongitude(), Toast.LENGTH_SHORT).show();
+//            editLocation.setText("");
+            if (isMockLocationOn(loc, DashboardActivity.this)){
+                Toast.makeText(DashboardActivity.this, "You use Fake GPS", Toast.LENGTH_LONG).show();
+                finish();
+            }
+//            Toast.makeText(
+//                    getBaseContext(),
+//                    "Location changed: Lat: " + loc.getLatitude() + " Lng: "
+//                            + loc.getLongitude(), Toast.LENGTH_SHORT).show();
             String longitude = "Longitude: " + loc.getLongitude();
             Log.e("absen", longitude);
             String latitude = "Latitude: " + loc.getLatitude();
@@ -108,7 +221,8 @@ public class DashboardActivity extends AppCompatActivity {
             }
             String s = longitude + "\n" + latitude + "\n\nMy Current City is: "
                     + cityName;
-            editLocation.setText(s);
+            Toast.makeText(getApplicationContext(), "Kota : "+cityName, Toast.LENGTH_LONG).show();
+//            editLocation.setText(s);
         }
 
         @Override
@@ -120,5 +234,22 @@ public class DashboardActivity extends AppCompatActivity {
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {}
     }
+
+    // user use fake gps
+    public static boolean isMockLocationOn(Location location, Context context) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            return location.isFromMockProvider();
+        } else {
+            String mockLocation = "0";
+            try {
+                mockLocation = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return !mockLocation.equals("0");
+        }
+    }
+
+
 
 }

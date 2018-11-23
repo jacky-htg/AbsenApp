@@ -1,9 +1,11 @@
 <resources>
-    <string name="app_name">AbsenApp</string>
+    <string name="app_name">Tasti</string>
     <string name="txt_absen">Absen</string>
     <string name="txt_email">Email</string>
     <string name="txt_password">Password</string>
     <string name="txt_login">Login</string>
     <string name="message_error_login">Email / Password Anda salah</string>
     <string name="message_proses_absen">Proses absensi sedang dilakukan</string>
+    <string name="permission_dialog">Accessing Location Permissions required</string>
+    <string name="go_to_permissions_settings">Go to App settings and enable permissions</string>
 </resources>
