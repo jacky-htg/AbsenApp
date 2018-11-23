@@ -119,12 +119,14 @@ public class DashboardActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        Log.e("cek param", job.toString());
+
         RequestQueue queue = Server.getInstance(this).getRequestQueue();
-        StringRequest sr = new StringRequest(Request.Method.POST, URL.GET_TOKEN, new Response.Listener<String>() {
+        StringRequest sr = new StringRequest(Request.Method.POST, URL.ABSEN, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
-                    Log.e("LOGIN", response.toString());
+                    Log.e("PAK RIJAL", response.toString());
                     dialogLoading.dismiss();
                     JSONObject jobj = new JSONObject(response);
                     String stat = jobj.getString("status");
@@ -138,7 +140,7 @@ public class DashboardActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                     dialogLoading.dismiss();
-                    Toast.makeText(DashboardActivity.this, "Login gagal", Toast.LENGTH_LONG).show();
+                    Toast.makeText(DashboardActivity.this, "gagal", Toast.LENGTH_LONG).show();
                 }
             }
         }, new Response.ErrorListener() {
@@ -152,7 +154,6 @@ public class DashboardActivity extends AppCompatActivity {
             public Map<String, String> getHeaders() {
                 Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json");
-                params.put("Accept", "application/json");
                 params.put("Authorization", Constant.BEARER + " 65B6778032156");
                 return params;
             }
