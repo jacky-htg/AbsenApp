@@ -49,24 +49,35 @@ import java.util.Map;
 public class DashboardActivity extends AppCompatActivity {
 
     public static boolean hasLogin = false;
-    Button btnAbsen;
+    Button btnAbsenCheckIn, btnAbsenCheckOut;
     SessionManager sessionManager;
     private Toolbar toolbar;
     private MyDialog dlg = new MyDialog();
     private EditText editLocation;
     private String lat, lng;
     private Dialog dialogLoading;
+    private String type;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
         getSupportActionBar().setTitle("Dashboard");
-        btnAbsen = findViewById(R.id.btnAbsen);
+        btnAbsenCheckIn = findViewById(R.id.btnAbsen);
+        btnAbsenCheckOut = findViewById(R.id.btnAbsen2);
+
         editLocation = findViewById(R.id.editLocation);
-        btnAbsen.setOnClickListener(new View.OnClickListener() {
+        btnAbsenCheckIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                type = "checkin";
+                absenProses();
+            }
+        });
+        btnAbsenCheckOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                type = "checkout";
                 absenProses();
             }
         });
@@ -115,6 +126,7 @@ public class DashboardActivity extends AppCompatActivity {
             job.put("jwt", SessionManager.getString(this, Constant.TOKEN));
             job.put("lat", lat);
             job.put("long", lng);
+            job.put("type", type);
         } catch (JSONException e) {
             e.printStackTrace();
         }
