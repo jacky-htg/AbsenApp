@@ -85,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        Log.e("PARAM LOGIN", job.toString());
         RequestQueue queue = Server.getInstance(this).getRequestQueue();
         StringRequest sr = new StringRequest(Request.Method.POST, URL.GET_TOKEN, new Response.Listener<String>() {
             @Override
@@ -112,8 +112,14 @@ public class LoginActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                String body;
-                Log.e("absen", error.networkResponse.data.toString());
+                try {
+                    String body;
+                    Log.e("absen", error.networkResponse.data.toString());
+                }catch (NullPointerException e) {
+                    e.printStackTrace();
+                    dialogLoading.dismiss();
+                    Toast.makeText(LoginActivity.this, "Internal Server Error", Toast.LENGTH_LONG).show();
+                }
             }
         }) {
             @Override

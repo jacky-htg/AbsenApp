@@ -91,17 +91,24 @@ public class DashboardActivity extends AppCompatActivity {
             // tetap di dashboard
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                LocationListener locationListener = new MyLocationListener();
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 10, locationListener);
-                Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                if(loc != null){
-                    if (isMockLocationOn(loc, DashboardActivity.this)){
-                        Toast.makeText(DashboardActivity.this, "You use Fake GPS", Toast.LENGTH_LONG).show();
-                        finish();
-                    }else{
-                        showAddress(loc);
+                boolean statusOfGPS = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                if(statusOfGPS){
+                    LocationListener locationListener = new MyLocationListener();
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 10, locationListener);
+                    Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if(loc != null){
+                        if (isMockLocationOn(loc, DashboardActivity.this)){
+                            Toast.makeText(DashboardActivity.this, "You use Fake GPS", Toast.LENGTH_LONG).show();
+                            finish();
+                        }else{
+                            showAddress(loc);
+                        }
                     }
+                }else {
+                    String message ="Please activate location in settingn";
+                    dlg.showDialogString(DashboardActivity.this, message);
                 }
+
             }else {
                 Toast.makeText(this, "Please check permission", Toast.LENGTH_LONG).show();
             }
